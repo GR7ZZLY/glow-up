@@ -156,10 +156,11 @@ Endpoints existentes: revisar server.js antes de crear uno nuevo, para no duplic
 
 Pendientes, en este orden:
 
-a) Verificar la firma `X-Hub-Signature-256` en `POST /webhook` usando el App Secret (hoy cualquiera que conozca la URL puede simular mensajes). Obligatorio antes de clientes reales.
+a) ✅ Hecho el 24/09/2026: verificar la firma `X-Hub-Signature-256` en `POST /webhook` usando el App Secret. Probado localmente con y sin firma, y con el botón "Probar" de Meta en Render.
 b) Evitar que el bot repita la misma respuesta a cada mensaje del cliente.
 c) Evitar duplicados si Meta reenvía un evento (usar el id del mensaje de WhatsApp).
 d) Mejorar la respuesta del bot (ej. lista de servicios), con lógica simple, sin IA.
+e) Las rutas CRUD (clientes, citas, servicios, etc.) y `POST /test/mensaje-entrante` están públicas en Render sin autenticación; revisar antes de clientes reales.
 
 ---
 
@@ -494,6 +495,8 @@ No agregar PORT en Render (Render la asigna solo).
 Nunca subir .env al repositorio.
 
 Nunca pegar el contenido del .env en chats.
+
+`META_APP_SECRET` existe en .env y en Render; se usa para verificar `X-Hub-Signature-256` en `POST /webhook`.
 
 ---
 
