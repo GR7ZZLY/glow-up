@@ -103,7 +103,7 @@ El stack puede evolucionar si existe una razón técnica clara.
 
 ## 5. Estado actual
 
-Proyecto:
+Proyecto local:
 
 GlowUp-Automatizacion
 
@@ -111,45 +111,51 @@ Ruta:
 
 C:\Users\Yoshiro\Desktop\GlowUp-Automatizacion
 
-Actualmente existen:
+Repositorio GitHub:
 
-- package.json
+GR7ZZLY/glow-up (rama main)
+
+Archivos principales:
+
+- package.json ("type": "commonjs", "start": "node server.js")
 - package-lock.json
-- node_modules
-- server.js
+- server.js (punto de entrada)
+- .env (NUNCA subido a GitHub, confirmado)
+- .gitignore
 - .claude/skills/glowup-project/SKILL.md
-
-Node.js y npm están instalados.
-
-Express está instalado.
-
-El servidor local funciona.
-
-Actualmente:
-
-GET /
-
-responde:
-
-"Glow Up está funcionando 💜"
 
 Servidor:
 
-http://localhost:3000
+- Local: `npm start` → http://localhost:3000
+- Producción: https://glow-up-js07.onrender.com (Render, plan Free)
+- Puerto: `const PORT = process.env.PORT || 3000;`
+
+Supabase (tablas creadas):
+
+- clientes
+- conversaciones
+- mensajes
+- servicios
+- citas
+- cita_servicios
+
+Webhook de WhatsApp:
+
+- URL configurada en Meta: https://glow-up-js07.onrender.com/webhook
+- Probado OK el 24/09/2026 con el botón "Probar" de Meta: el mensaje llegó a Render y se guardó en Supabase (mensajes.id 13), reutilizando la conversación existente del mismo cliente.
+- ngrok ya NO se usa.
+
+Endpoints existentes: revisar server.js antes de crear uno nuevo, para no duplicar rutas.
 
 ---
 
 ## 6. Próximo objetivo inmediato
 
-Crear:
+Por definir con el desarrollador.
 
-GET /servicios
+Candidato: que el bot responda automáticamente con lógica simple (sin IA), por ejemplo mostrando la lista de servicios.
 
-Inicialmente utilizando datos locales.
-
-NO utilizar Supabase todavía.
-
-El objetivo es aprender primero cómo funciona una API REST básica.
+Nota: para ENVIAR mensajes por WhatsApp se necesita un token de acceso de Meta, que todavía no está generado. Si se usa, debe ir en .env y en las variables de entorno de Render, nunca en el código.
 
 ---
 
@@ -267,7 +273,7 @@ Actualmente NO conocemos las duraciones exactas de todos los servicios.
 
 No inventar duraciones.
 
-Cuando se implemente la base de datos, la duración podrá ser NULL.
+La duración puede ser NULL en la base de datos.
 
 ---
 
@@ -289,7 +295,7 @@ Servicios:
 - Pedicure
 - Diseño de uñas
 
-La arquitectura futura debe permitir:
+La arquitectura debe permitir:
 
 citas
 ↓
@@ -332,9 +338,9 @@ Durante ATENCIÓN HUMANA el bot no debe responder automáticamente.
 
 ---
 
-# 14. Entidades futuras
+# 14. Entidades
 
-La base de datos debería contemplar:
+Ya creadas en Supabase:
 
 clientes
 conversaciones
@@ -342,9 +348,10 @@ mensajes
 servicios
 citas
 cita_servicios
-pagos
 
-No crear estas tablas hasta que llegue la etapa de Supabase.
+Pendiente:
+
+pagos → no crear hasta que se necesite gestionar adelantos.
 
 ---
 
@@ -472,50 +479,33 @@ Nunca colocar:
 
 directamente en el código.
 
-Cuando lleguemos a integraciones externas utilizar:
+Local: usar .env (actualmente tiene 5 variables).
 
-.env
+Producción: las mismas variables están cargadas en Render → Environment.
 
-y variables de entorno.
+Si se agrega una variable nueva al .env, también hay que agregarla en Render, o fallará en producción.
+
+No agregar PORT en Render (Render la asigna solo).
 
 Nunca subir .env al repositorio.
+
+Nunca pegar el contenido del .env en chats.
 
 ---
 
 # 22. Arquitectura progresiva
 
-ETAPA 1:
-Node.js + Express
-
-ETAPA 2:
-API REST básica
-
-ETAPA 3:
-Estructuración del backend
-
-ETAPA 4:
-Supabase
-
-ETAPA 5:
-WhatsApp Cloud API
-
-ETAPA 6:
-Webhooks
-
-ETAPA 7:
-Gestión de conversaciones
-
-ETAPA 8:
-Google Calendar
-
-ETAPA 9:
-Dashboard
-
-ETAPA 10:
-IA
-
-ETAPA 11:
-Render
+ETAPA 1: Node.js + Express ✅
+ETAPA 2: API REST básica
+ETAPA 3: Estructuración del backend
+ETAPA 4: Supabase ✅
+ETAPA 5: WhatsApp Cloud API (recepción ✅ / envío pendiente)
+ETAPA 6: Webhooks ✅
+ETAPA 7: Gestión de conversaciones (en progreso)
+ETAPA 8: Google Calendar
+ETAPA 9: Dashboard
+ETAPA 10: IA
+ETAPA 11: Render ✅ (adelantada para tener una URL fija del webhook en vez de ngrok)
 
 Las etapas pueden ajustarse si existe una razón técnica.
 
@@ -574,3 +564,13 @@ Limitación conocida del webhook de WhatsApp: mientras la app de Meta esté en m
 Para recibir mensajes reales de clientes se necesita: (1) Verificación de Negocio de la empresa ante Meta (documentos legales del negocio), y (2) Revisión de la app (App Review) y publicación. Esto es una decisión pendiente que le corresponde a la dueña del negocio, no una tarea técnica de desarrollo — no iniciar sin su aprobación explícita.
 
 Mientras tanto, el desarrollo y las pruebas del webhook continúan usando el botón "Probar" del panel de Meta, que simula el flujo completo de forma equivalente.
+
+Despliegue en Render (24/09/2026):
+
+- Servicio: glow-up, plan Free, región Oregon.
+- Build Command: `npm install`. Start Command: `node server.js`.
+- Render asigna el puerto (actualmente 10000) mediante `process.env.PORT`.
+- En los logs de Render aparece `injected env (0) from .env`: es normal, porque en Render no existe archivo .env; las variables llegan desde la configuración de Render.
+- El plan Free "duerme" el servidor tras ~15 minutos sin uso; la primera petición puede tardar ~50 segundos. Aceptable para pruebas; revisar antes de atender clientes reales.
+- Cada `git push` a main puede disparar un nuevo deploy automático en Render.
+- Los logs en Render: menú izquierdo → Logs. Solo muestran lo que el código imprime con console.log ("Request logs" no está disponible en el plan Free).
