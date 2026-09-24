@@ -151,6 +151,32 @@ async function guardarMensaje(conversacion_id, remitente, contenido) {
     return creado;
 }
 
+async function enviarMensajeWhatsApp(telefono, texto) {
+    const url = `https://graph.facebook.com/v25.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+
+    const respuesta = await fetch(url, {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to: telefono,
+            type: "text",
+            text: { body: texto }
+        })
+    });
+
+    const json = await respuesta.json();
+
+    if (!respuesta.ok) {
+        throw new Error(`Error al enviar mensaje de WhatsApp: ${JSON.stringify(json)}`);
+    }
+
+    return json;
+}
+
 async function procesarMensajeEntrante(telefono, contenido) {
     const cliente = await resolverClientePorTelefono(telefono);
     let conversacion = await resolverConversacionActiva(cliente.id);
@@ -1452,7 +1478,16 @@ app.post("/webhook", async (req, res) => {
         const telefono = mensaje.from;
         const contenido = mensaje.text.body;
 
-        await procesarMensajeEntrante(telefono, contenido);
+        const { conversacion } = await procesarMensajeEntrante(telefono, contenido);
+
+        if (conversacion.estado === "BOT_ACTIVO") {
+            try {
+                await enviarMensajeWhatsApp(telefono, "Hola, en un momento te atendemos.");
+                await guardarMensaje(conversacion.id, "BOT", "Hola, en un momento te atendemos.");
+            } catch (errorEnvio) {
+                console.error("Error enviando respuesta automática de WhatsApp:", errorEnvio);
+            }
+        }
     } catch (error) {
         console.error("Error procesando mensaje entrante de WhatsApp:", error);
     }
