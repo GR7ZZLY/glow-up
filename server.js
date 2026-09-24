@@ -46,6 +46,7 @@ app.use((req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
+const HORAS_ENTRE_RESPUESTAS_BOT = 24;
 
 async function resolverClientePorTelefono(telefono) {
     const { data: cliente, error: errorBusqueda } = await supabase
@@ -209,6 +210,29 @@ async function enviarMensajeWhatsApp(telefono, texto) {
     }
 
     return json;
+}
+
+async function botRespondioRecientemente(conversacion_id) {
+    const { data, error } = await supabase
+        .from("mensajes")
+        .select("creado_en")
+        .eq("conversacion_id", conversacion_id)
+        .eq("remitente", "BOT")
+        .order("creado_en", { ascending: false })
+        .limit(1);
+
+    if (error) {
+        throw error;
+    }
+
+    if (data.length === 0) {
+        return false;
+    }
+
+    const ultimaRespuesta = new Date(data[0].creado_en);
+    const horasTranscurridas = (Date.now() - ultimaRespuesta.getTime()) / (1000 * 60 * 60);
+
+    return horasTranscurridas < HORAS_ENTRE_RESPUESTAS_BOT;
 }
 
 async function procesarMensajeEntrante(telefono, contenido) {
@@ -1546,8 +1570,12 @@ app.post("/webhook", async (req, res) => {
 
         if (conversacion.estado === "BOT_ACTIVO") {
             try {
-                await enviarMensajeWhatsApp(telefono, "Hola, en un momento te atendemos.");
-                await guardarMensaje(conversacion.id, "BOT", "Hola, en un momento te atendemos.");
+                if (await botRespondioRecientemente(conversacion.id)) {
+                    console.log("Respuesta automática omitida: el bot ya respondió recientemente en esta conversación");
+                } else {
+                    await enviarMensajeWhatsApp(telefono, "Hola, en un momento te atendemos.");
+                    await guardarMensaje(conversacion.id, "BOT", "Hola, en un momento te atendemos.");
+                }
             } catch (errorEnvio) {
                 console.error("Error enviando respuesta automática de WhatsApp:", errorEnvio);
             }

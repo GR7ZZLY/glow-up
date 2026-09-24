@@ -157,7 +157,7 @@ Endpoints existentes: revisar server.js antes de crear uno nuevo, para no duplic
 Pendientes, en este orden:
 
 a) ✅ Hecho el 24/09/2026: verificar la firma `X-Hub-Signature-256` en `POST /webhook` usando el App Secret. Probado localmente con y sin firma, y con el botón "Probar" de Meta en Render.
-b) Evitar que el bot repita la misma respuesta a cada mensaje del cliente.
+b) ✅ Hecho el 24/09/2026: el bot solo responde si no respondió en esa conversación en las últimas `HORAS_ENTRE_RESPUESTAS_BOT` (24, constante en `server.js`; valor elegido por coincidir con la ventana de 24 h de WhatsApp, la dueña puede cambiarlo). Probado localmente.
 c) Evitar duplicados si Meta reenvía un evento (usar el id del mensaje de WhatsApp).
 d) Mejorar la respuesta del bot (ej. lista de servicios), con lógica simple, sin IA.
 e) ✅ Hecho el 24/09/2026: todas las rutas están protegidas por defecto con el header `x-api-key` (`ADMIN_API_KEY`), excepto `GET /`, `GET /webhook` y `POST /webhook`. Probado local y en Render.
