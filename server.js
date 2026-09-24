@@ -172,10 +172,10 @@ async function resolverOCrearConversacion(telefono) {
     }
 }
 
-async function guardarMensaje(conversacion_id, remitente, contenido) {
+async function guardarMensaje(conversacion_id, remitente, contenido, whatsapp_message_id = null) {
     const { data: creado, error } = await supabase
         .from("mensajes")
-        .insert({ conversacion_id, remitente, contenido })
+        .insert({ conversacion_id, remitente, contenido, whatsapp_message_id })
         .select()
         .single();
 
@@ -235,7 +235,7 @@ async function botRespondioRecientemente(conversacion_id) {
     return horasTranscurridas < HORAS_ENTRE_RESPUESTAS_BOT;
 }
 
-async function procesarMensajeEntrante(telefono, contenido) {
+async function procesarMensajeEntrante(telefono, contenido, whatsapp_message_id = null) {
     const cliente = await resolverClientePorTelefono(telefono);
     let conversacion = await resolverConversacionActiva(cliente.id);
 
@@ -251,7 +251,17 @@ async function procesarMensajeEntrante(telefono, contenido) {
         }
     }
 
-    const mensaje = await guardarMensaje(conversacion.id, "CLIENTE", contenido);
+    let mensaje;
+    try {
+        mensaje = await guardarMensaje(conversacion.id, "CLIENTE", contenido, whatsapp_message_id);
+    } catch (errorMensaje) {
+        if (errorMensaje.code === "23505") {
+            console.log("Mensaje duplicado ignorado");
+            mensaje = null;
+        } else {
+            throw errorMensaje;
+        }
+    }
 
     return {
         cliente,
@@ -1565,10 +1575,28 @@ app.post("/webhook", async (req, res) => {
 
         const telefono = mensaje.from;
         const contenido = mensaje.text.body;
+        const whatsappMessageId = mensaje.id;
 
-        const { conversacion } = await procesarMensajeEntrante(telefono, contenido);
+        if (whatsappMessageId) {
+            const { data: existente, error: errorExistente } = await supabase
+                .from("mensajes")
+                .select("id")
+                .eq("whatsapp_message_id", whatsappMessageId)
+                .maybeSingle();
 
-        if (conversacion.estado === "BOT_ACTIVO") {
+            if (errorExistente) {
+                throw errorExistente;
+            }
+
+            if (existente) {
+                console.log("Mensaje duplicado ignorado");
+                return res.sendStatus(200);
+            }
+        }
+
+        const { conversacion, mensaje: mensajeGuardado } = await procesarMensajeEntrante(telefono, contenido, whatsappMessageId);
+
+        if (mensajeGuardado && conversacion.estado === "BOT_ACTIVO") {
             try {
                 if (await botRespondioRecientemente(conversacion.id)) {
                     console.log("Respuesta automática omitida: el bot ya respondió recientemente en esta conversación");
