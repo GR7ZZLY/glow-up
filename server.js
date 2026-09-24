@@ -12,6 +12,39 @@ const app = express();
 
 app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }));
 
+function requiereApiKey(req, res, next) {
+    if (!process.env.ADMIN_API_KEY) {
+        console.error("ADMIN_API_KEY no está configurada");
+        return res.sendStatus(401);
+    }
+
+    const header = req.headers["x-api-key"];
+
+    if (!header) {
+        return res.sendStatus(401);
+    }
+
+    const bufferRecibido = Buffer.from(header);
+    const bufferEsperado = Buffer.from(process.env.ADMIN_API_KEY);
+
+    if (bufferRecibido.length !== bufferEsperado.length) {
+        return res.sendStatus(401);
+    }
+
+    if (!crypto.timingSafeEqual(bufferRecibido, bufferEsperado)) {
+        return res.sendStatus(401);
+    }
+
+    next();
+}
+
+app.use((req, res, next) => {
+    if (req.path === "/" || req.path === "/webhook") {
+        return next();
+    }
+    requiereApiKey(req, res, next);
+});
+
 const PORT = process.env.PORT || 3000;
 
 async function resolverClientePorTelefono(telefono) {
