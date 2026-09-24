@@ -1,6 +1,7 @@
 const express = require("express");
 require("dotenv").config();
 const { createClient } = require("@supabase/supabase-js");
+const crypto = require("crypto");
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -9,7 +10,7 @@ const supabase = createClient(
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }));
 
 const PORT = process.env.PORT || 3000;
 
@@ -1448,6 +1449,31 @@ app.post("/test/mensaje-entrante", async (req, res) => {
     }
 });
 
+function firmaValida(req) {
+    const header = req.headers["x-hub-signature-256"];
+
+    if (!header || !req.rawBody || !process.env.META_APP_SECRET) {
+        if (!process.env.META_APP_SECRET) {
+            console.error("META_APP_SECRET no está configurado");
+        }
+        return false;
+    }
+
+    const firmaEsperada = "sha256=" + crypto
+        .createHmac("sha256", process.env.META_APP_SECRET)
+        .update(req.rawBody)
+        .digest("hex");
+
+    const bufferRecibido = Buffer.from(header);
+    const bufferEsperado = Buffer.from(firmaEsperada);
+
+    if (bufferRecibido.length !== bufferEsperado.length) {
+        return false;
+    }
+
+    return crypto.timingSafeEqual(bufferRecibido, bufferEsperado);
+}
+
 app.get("/webhook", (req, res) => {
     const mode = req.query["hub.mode"];
     const token = req.query["hub.verify_token"];
@@ -1461,6 +1487,11 @@ app.get("/webhook", (req, res) => {
 });
 
 app.post("/webhook", async (req, res) => {
+    if (!firmaValida(req)) {
+        console.warn("Firma inválida en /webhook");
+        return res.sendStatus(401);
+    }
+
     try {
         const value = req.body?.entry?.[0]?.changes?.[0]?.value;
         const mensajes = value?.messages;
