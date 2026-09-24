@@ -144,6 +144,9 @@ Webhook de WhatsApp:
 - URL configurada en Meta: https://glow-up-js07.onrender.com/webhook
 - Probado OK el 24/09/2026 con el botón "Probar" de Meta: el mensaje llegó a Render y se guardó en Supabase (mensajes.id 13), reutilizando la conversación existente del mismo cliente.
 - ngrok ya NO se usa.
+- Función `enviarMensajeWhatsApp(telefono, texto)` en `server.js` (fetch nativo a Graph API v25.0).
+- `POST /webhook` responde automáticamente "Hola, en un momento te atendemos." si la conversación está en `BOT_ACTIVO`, y lo guarda como `BOT`. En `ATENCION_HUMANA` no responde. Si el envío falla, solo `console.error` y Meta sigue recibiendo 200.
+- Probado OK el 24/09/2026 localmente y en Render.
 
 Endpoints existentes: revisar server.js antes de crear uno nuevo, para no duplicar rutas.
 
@@ -151,11 +154,12 @@ Endpoints existentes: revisar server.js antes de crear uno nuevo, para no duplic
 
 ## 6. Próximo objetivo inmediato
 
-Por definir con el desarrollador.
+Pendientes, en este orden:
 
-Candidato: que el bot responda automáticamente con lógica simple (sin IA), por ejemplo mostrando la lista de servicios.
-
-Nota: para ENVIAR mensajes por WhatsApp se necesita un token de acceso de Meta, que todavía no está generado. Si se usa, debe ir en .env y en las variables de entorno de Render, nunca en el código.
+a) Verificar la firma `X-Hub-Signature-256` en `POST /webhook` usando el App Secret (hoy cualquiera que conozca la URL puede simular mensajes). Obligatorio antes de clientes reales.
+b) Evitar que el bot repita la misma respuesta a cada mensaje del cliente.
+c) Evitar duplicados si Meta reenvía un evento (usar el id del mensaje de WhatsApp).
+d) Mejorar la respuesta del bot (ej. lista de servicios), con lógica simple, sin IA.
 
 ---
 
@@ -499,7 +503,7 @@ ETAPA 1: Node.js + Express ✅
 ETAPA 2: API REST básica
 ETAPA 3: Estructuración del backend
 ETAPA 4: Supabase ✅
-ETAPA 5: WhatsApp Cloud API (recepción ✅ / envío pendiente)
+ETAPA 5: WhatsApp Cloud API (recepción ✅ / envío ✅)
 ETAPA 6: Webhooks ✅
 ETAPA 7: Gestión de conversaciones (en progreso)
 ETAPA 8: Google Calendar
@@ -574,3 +578,11 @@ Despliegue en Render (24/09/2026):
 - El plan Free "duerme" el servidor tras ~15 minutos sin uso; la primera petición puede tardar ~50 segundos. Aceptable para pruebas; revisar antes de atender clientes reales.
 - Cada `git push` a main puede disparar un nuevo deploy automático en Render.
 - Los logs en Render: menú izquierdo → Logs. Solo muestran lo que el código imprime con console.log ("Request logs" no está disponible en el plan Free).
+
+Token de WhatsApp: permanente, generado con el usuario del sistema "glowup-bot" en el portafolio comercial "GlowUp" (business_id 1642748234116647), con permisos `whatsapp_business_messaging` y `whatsapp_business_management`. Guardado en `WHATSAPP_ACCESS_TOKEN` (.env y Render).
+
+Para administrar el portafolio GlowUp hay que entrar a business.facebook.com con la cuenta principal de Facebook, NO con la cuenta vinculada de Instagram (esa solo ve el portafolio GR1ZZLY, que no tiene la app).
+
+En modo desarrollo solo se puede enviar a números agregados como destinatarios de prueba, y el texto libre requiere que el cliente haya escrito en las últimas 24 horas.
+
+Para probar el webhook sin Meta se puede simular un evento con PowerShell (Invoke-RestMethod a /webhook con un JSON de entry/changes/value/messages).
