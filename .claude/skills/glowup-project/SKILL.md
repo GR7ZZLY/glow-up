@@ -160,7 +160,7 @@ a) ✅ Hecho el 24/09/2026: verificar la firma `X-Hub-Signature-256` en `POST /w
 b) Evitar que el bot repita la misma respuesta a cada mensaje del cliente.
 c) Evitar duplicados si Meta reenvía un evento (usar el id del mensaje de WhatsApp).
 d) Mejorar la respuesta del bot (ej. lista de servicios), con lógica simple, sin IA.
-e) Las rutas CRUD (clientes, citas, servicios, etc.) y `POST /test/mensaje-entrante` están públicas en Render sin autenticación; revisar antes de clientes reales.
+e) ✅ Hecho el 24/09/2026: todas las rutas están protegidas por defecto con el header `x-api-key` (`ADMIN_API_KEY`), excepto `GET /`, `GET /webhook` y `POST /webhook`. Probado local y en Render.
 
 ---
 
@@ -497,6 +497,8 @@ Nunca subir .env al repositorio.
 Nunca pegar el contenido del .env en chats.
 
 `META_APP_SECRET` existe en .env y en Render; se usa para verificar `X-Hub-Signature-256` en `POST /webhook`.
+
+`ADMIN_API_KEY` existe en .env y en Render; cualquier ruta nueva queda protegida automáticamente. Para llamar rutas de administración hay que enviar el header `x-api-key`. Si en el futuro se necesita una ruta pública nueva, hay que agregarla explícitamente a las excepciones del middleware.
 
 ---
 
