@@ -235,6 +235,45 @@ async function botRespondioRecientemente(conversacion_id) {
     return horasTranscurridas < HORAS_ENTRE_RESPUESTAS_BOT;
 }
 
+async function construirMensajeServicios() {
+    const ORDEN_CATEGORIAS = ["CABELLO", "MANICURE", "PEDICURE", "PESTAÑAS", "CEJAS"];
+
+    const { data: servicios, error } = await supabase
+        .from("servicios")
+        .select("id, categoria, nombre, precio, tipo_precio")
+        .eq("activo", true)
+        .order("id");
+
+    if (error || !servicios || servicios.length === 0) {
+        if (error) {
+            console.error("Error al obtener servicios para el mensaje del bot:", error);
+        }
+        return "Hola, en un momento te atendemos.";
+    }
+
+    const porCategoria = {};
+    for (const s of servicios) {
+        if (!porCategoria[s.categoria]) porCategoria[s.categoria] = [];
+        const precioTexto = s.tipo_precio === "FIJO" ? `S/${s.precio}` : `Desde S/${s.precio}`;
+        porCategoria[s.categoria].push(`- ${s.nombre}: ${precioTexto}`);
+    }
+
+    const categoriasPresentes = Object.keys(porCategoria);
+    const categoriasOrdenadas = [
+        ...ORDEN_CATEGORIAS.filter((c) => categoriasPresentes.includes(c)),
+        ...categoriasPresentes.filter((c) => !ORDEN_CATEGORIAS.includes(c))
+    ];
+
+    let texto = "¡Hola! 💜 Bienvenido/a a Glow Up. Estos son nuestros servicios:\n\n";
+    for (const categoria of categoriasOrdenadas) {
+        texto += `*${categoria}*\n${porCategoria[categoria].join("\n")}\n\n`;
+    }
+    texto += "Horario: todos los días de 10:00 AM a 9:00 PM.\n\n";
+    texto += "Cuéntanos qué servicio te interesa y en un momento te atendemos 💜";
+
+    return texto;
+}
+
 async function procesarMensajeEntrante(telefono, contenido, whatsapp_message_id = null) {
     const cliente = await resolverClientePorTelefono(telefono);
     let conversacion = await resolverConversacionActiva(cliente.id);
@@ -1601,8 +1640,9 @@ app.post("/webhook", async (req, res) => {
                 if (await botRespondioRecientemente(conversacion.id)) {
                     console.log("Respuesta automática omitida: el bot ya respondió recientemente en esta conversación");
                 } else {
-                    await enviarMensajeWhatsApp(telefono, "Hola, en un momento te atendemos.");
-                    await guardarMensaje(conversacion.id, "BOT", "Hola, en un momento te atendemos.");
+                    const textoBot = await construirMensajeServicios();
+                    await enviarMensajeWhatsApp(telefono, textoBot);
+                    await guardarMensaje(conversacion.id, "BOT", textoBot);
                 }
             } catch (errorEnvio) {
                 console.error("Error enviando respuesta automática de WhatsApp:", errorEnvio);

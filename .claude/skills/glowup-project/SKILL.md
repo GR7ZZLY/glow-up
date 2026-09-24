@@ -159,7 +159,7 @@ Pendientes, en este orden:
 a) ✅ Hecho el 24/09/2026: verificar la firma `X-Hub-Signature-256` en `POST /webhook` usando el App Secret. Probado localmente con y sin firma, y con el botón "Probar" de Meta en Render.
 b) ✅ Hecho el 24/09/2026: el bot solo responde si no respondió en esa conversación en las últimas `HORAS_ENTRE_RESPUESTAS_BOT` (24, constante en `server.js`; valor elegido por coincidir con la ventana de 24 h de WhatsApp, la dueña puede cambiarlo). Probado localmente.
 c) ✅ Hecho el 24/09/2026: se agregó la columna `mensajes.whatsapp_message_id` (text, unique, nullable); `POST /webhook` ignora mensajes cuyo id ya existe, y si dos reenvíos llegan a la vez, el error `23505` se trata como duplicado sin responder. Probado localmente enviando el mismo mensaje dos veces.
-d) Mejorar la respuesta del bot (ej. lista de servicios), con lógica simple, sin IA.
+d) ✅ Hecho el 24/09/2026: el bot responde con saludo + lista de servicios activos leída de Supabase (`construirMensajeServicios`), agrupada en orden CABELLO, MANICURE, PEDICURE, PESTAÑAS, CEJAS, ordenada por id, con formato FIJO "S/25" y DESDE "Desde S/200", horario, y cierre "en un momento te atendemos". Si falla, envía "Hola, en un momento te atendemos.". Probado localmente.
 e) ✅ Hecho el 24/09/2026: todas las rutas están protegidas por defecto con el header `x-api-key` (`ADMIN_API_KEY`), excepto `GET /`, `GET /webhook` y `POST /webhook`. Probado local y en Render.
 
 ---
@@ -190,6 +190,8 @@ Adelanto:
 ---
 
 # 8. Servicios
+
+Nota: la fuente de verdad de precios es la tabla `servicios` de Supabase; esta lista es referencia y debe mantenerse igual a la tabla.
 
 ## CABELLO
 
@@ -242,7 +244,7 @@ Adelanto:
 - Diseño de cejas — S/15
 - Laminado de cejas — S/30
 - Laminado + perfilado — S/35
-- Tinte de cejas — S/25
+- Tinte de cejas — Desde S/40
 
 ---
 
