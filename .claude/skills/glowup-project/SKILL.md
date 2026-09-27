@@ -190,7 +190,19 @@ Todos los días
 
 Adelanto:
 
-50%
+S/ 20 para cualquier servicio (confirmado por la dueña el 27/09/2026)
+
+Ubicación:
+
+Los Olivos, a la espalda de la municipalidad y al costado del colegio Pitágoras
+
+Pagos:
+
+Yape, Plin, transferencia y tarjeta (5% de recargo con tarjeta)
+
+Diagnóstico:
+
+Diagnóstico capilar gratuito y presencial
 
 ---
 
@@ -198,11 +210,13 @@ Adelanto:
 
 Nota: la fuente de verdad de precios es la tabla `servicios` de Supabase; esta lista es referencia y debe mantenerse igual a la tabla.
 
+Actualizado el 27/09/2026 con el estado actual confirmado por la dueña. Hay precios pendientes de confirmar en el documento de validación "Ronda 2".
+
 ## CABELLO
 
-- Alisado Orgánico — Desde S/200
-- Alisado Vegetal / Termo Vital — Desde S/300
-- Alisado Diamond — Desde S/350
+- Alisado Orgánico Premium — Desde S/300 (8 meses, liso 100%, no termoactivo)
+- Alisado Frizz Control — Desde S/200 (4-5 meses, termoactivo)
+- Laceado Diamond — Desde S/350 (12 meses, ideal para cabello afro; equivale al "Dual Premium")
 - Botox Capilar — Desde S/100
 - Tratamiento Antifrizz y Porosidad — Desde S/150
 - Bioplastia — Desde S/150
@@ -219,7 +233,7 @@ Nota: la fuente de verdad de precios es la tabla `servicios` de Supabase; esta l
 ## MANICURE
 
 - Manicure clásica — S/25
-- Gel — S/30
+- Esmaltado en gel — Desde S/35
 - Rubber — S/40
 - Acrílicas — S/50
 - Polygel — S/60
@@ -229,15 +243,15 @@ Nota: la fuente de verdad de precios es la tabla `servicios` de Supabase; esta l
 
 ## PEDICURE
 
-- Pedicure semipermanente — Desde S/40
+- Pedicure en gel — Desde S/45
 - Retiro de producto — Desde S/10
 - Diseño de uñas — Desde S/10
 
 ## PESTAÑAS
 
-- Lifting clásico — S/40
-- Lifting efecto rímel — S/50
-- Lifting coreano — S/80
+- Lifting clásico — S/49.99 (incluye efecto rímel)
+- Lifting efecto rímel — S/50 (sigue activo en la tabla; pendiente confirmar en Ronda 2 si se ofrece aparte, porque el lifting clásico ya lo incluye)
+- Lifting coreano — S/79.99
 - Extensiones de pestañas clásicas — S/50
 - Extensiones de pestañas rímel — S/80
 - Extensiones tecnológicas — S/70
@@ -600,3 +614,45 @@ Para administrar el portafolio GlowUp hay que entrar a business.facebook.com con
 En modo desarrollo solo se puede enviar a números agregados como destinatarios de prueba, y el texto libre requiere que el cliente haya escrito en las últimas 24 horas.
 
 Para probar el webhook sin Meta se puede simular un evento con PowerShell (Invoke-RestMethod a /webhook con un JSON de entry/changes/value/messages).
+
+"Ian" en las instrucciones antiguas de su IA es la propia dueña.
+
+Decisión de la dueña (27/09/2026): el bot usará el MISMO número de Glow Up (+51 987 140 537). No se cambiará el número y no se puede perder ningún chat ni la información de su IA actual.
+
+PROHIBIDO registrar ese número directamente en la Cloud API (requiere eliminar la cuenta de la app y se perderían los datos). El único camino compatible es Coexistencia (app WhatsApp Business + Cloud API en el mismo número), que requiere ser Tech Provider/Solution Partner o usar un proveedor intermediario; pendiente investigar costos y requisitos.
+
+La IA actual de la dueña es Meta Business Agent (dentro de WhatsApp Business). Está en pausa; mantenerla así para que no responda junto con el bot. La dueña ya descargó sus datos y respaldó sus chats.
+
+---
+
+# 26. Objetivo de costo
+
+Meta: operar con costo S/0 inicialmente, con planes gratuitos, respetando las reglas oficiales de Meta/WhatsApp y de las APIs. Solo vía oficial; no usar librerías no oficiales de WhatsApp Web (riesgo de bloqueo del número).
+
+Referencia (no requisito): un proyecto similar de un conocido funciona con planes gratuitos, Gemini en cuota gratuita y sin verificación documental del negocio.
+
+Datos verificados el 27/09/2026: la Cloud API funciona sin Verificación del Negocio (límites: 250 clientes únicos/24 h en mensajes iniciados por el negocio, 2 números). Desde el 01/10/2026 Meta cobra los mensajes de servicio (respuestas del bot y humanas en la ventana de 24 h) tras 1,000 gratis por número al mes; los mensajes entrantes son gratis. Sin método de pago, Meta podría dejar de entregar al agotar la cuota.
+
+Volumen real: ~94 conversaciones en 7 días (~400/mes). Idea a validar: con coexistencia, que el bot envíe solo el primer mensaje y la dueña siga respondiendo desde la app, si se confirma que esos mensajes no consumen la cuota de la API.
+
+Render Free se mantiene por ahora (Meta reintenta si el servidor duerme; hay protección contra duplicados).
+
+Pendiente: medir mensajes BOT + HUMANO por mes.
+
+Gemini: al implementarlo, verificar límites vigentes de la cuota gratuita y condiciones de uso de datos.
+
+---
+
+# 27. Reglas de comportamiento del bot
+
+De las instrucciones que la dueña ya tenía para su IA anterior (confirmadas el 27/09/2026, a implementar progresivamente):
+
+- Tono profesional, con emojis cuando corresponda.
+- Compartir los precios siempre como "desde".
+- Dar el detalle completo de un servicio solo si la clienta quiere agendar.
+- Las citas están sujetas a disponibilidad.
+- Si la clienta envía fotos o está indecisa, pasar la conversación a atención humana.
+- No mencionar marcas de productos. Texto exacto de la dueña: "Bella, por protocolos del salón no brindamos nombres de marcas, pero sí te garantizamos que son productos profesionales y libres de formol. Las características técnicas se brindan una vez que estés consumiendo el servicio o en tu evaluación física. ¡Te esperamos!"
+- Política de citas: cancelar el mismo día o no asistir hace perder el adelanto; se puede reprogramar avisando con 6 horas de anticipación, y solo una vez.
+- No programar alisado y tinte el mismo día.
+- Mensaje de seguimiento 1 hora después de la conversación: SE MANTIENE como regla, pendiente de implementar.
