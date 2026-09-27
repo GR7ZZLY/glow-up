@@ -17,6 +17,11 @@
 
     * { box-sizing: border-box; }
 
+    html, body {
+        height: 100%;
+        overflow: hidden;
+    }
+
     body {
         margin: 0;
         font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
@@ -29,6 +34,7 @@
         align-items: center;
         justify-content: center;
         height: 100vh;
+        height: 100dvh;
     }
 
     .login-box {
@@ -72,6 +78,7 @@
     }
 
     button.primary:hover { background: var(--morado-oscuro); }
+    button.primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .login-box button.primary {
         width: 100%;
@@ -81,6 +88,8 @@
     #app {
         display: none;
         height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
     }
 
     #app.activo { display: flex; }
@@ -126,6 +135,7 @@
 
     .panel-chat {
         flex: 1;
+        min-height: 0;
         display: flex;
         flex-direction: column;
         background: #fdfbff;
@@ -219,6 +229,8 @@
 
     @media (max-width: 700px) {
         .panel-lista, .panel-chat { width: 100%; min-width: 0; }
+
+        .panel-lista { flex: 1; min-height: 0; }
 
         #app.activo { flex-direction: column; }
 
@@ -569,10 +581,13 @@
         e.preventDefault();
         const id = e.target.dataset.conversacionId;
         const input = document.getElementById("input-texto");
+        const boton = e.target.querySelector("button[type=submit]");
         const texto = input.value.trim();
         if (!id || !texto) return;
 
         ocultarError();
+        input.disabled = true;
+        boton.disabled = true;
 
         try {
             const respuesta = await apiFetch("/conversaciones/" + id + "/responder", {
@@ -594,6 +609,9 @@
             await cargarLista();
         } catch (err) {
             mostrarError("Error de conexión al enviar el mensaje");
+        } finally {
+            input.disabled = false;
+            boton.disabled = false;
         }
     });
 

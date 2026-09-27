@@ -163,8 +163,8 @@ b) ✅ Hecho el 24/09/2026: el bot solo responde si no respondió en esa convers
 c) ✅ Hecho el 24/09/2026: se agregó la columna `mensajes.whatsapp_message_id` (text, unique, nullable); `POST /webhook` ignora mensajes cuyo id ya existe, y si dos reenvíos llegan a la vez, el error `23505` se trata como duplicado sin responder. Probado localmente enviando el mismo mensaje dos veces.
 d) ✅ Hecho el 24/09/2026: el bot responde con saludo + lista de servicios activos leída de Supabase (`construirMensajeServicios`), agrupada en orden CABELLO, MANICURE, PEDICURE, PESTAÑAS, CEJAS, ordenada por id, con formato FIJO "S/25" y DESDE "Desde S/200", horario, y cierre "en un momento te atendemos". Si falla, envía "Hola, en un momento te atendemos.". Probado localmente.
 e) ✅ Hecho el 24/09/2026: todas las rutas están protegidas por defecto con el header `x-api-key` (`ADMIN_API_KEY`), excepto `GET /`, `GET /webhook` y `POST /webhook`. Probado local y en Render.
-f) ✅ Hecho el 27/09/2026: mini dashboard para que la dueña vea conversaciones y responda usando `POST /conversaciones/:id/responder`. Para devolver una conversación al bot se usa `PATCH /conversaciones/:id` con `estado` `BOT_ACTIVO`. Probado localmente: lista, chat, enviar y devolver al bot.
-g) Desactivar el botón "Enviar" del dashboard mientras envía (evitar doble envío).
+f) ✅ Hecho el 27/09/2026: mini dashboard para que la dueña vea conversaciones y responda usando `POST /conversaciones/:id/responder`. Para devolver una conversación al bot se usa `PATCH /conversaciones/:id` con `estado` `BOT_ACTIVO`. El encabezado del chat queda fijo (solo hacen scroll los mensajes). Probado localmente: lista, chat, enviar y devolver al bot.
+g) ✅ Hecho el 27/09/2026: se desactiva el botón "Enviar" y la caja de texto del dashboard mientras envía, y se reactivan al terminar (éxito o error), evitando doble envío.
 h) Optimizar la carga de la lista del dashboard (hoy hace una llamada por conversación cada 10 s).
 
 ---
