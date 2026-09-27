@@ -2,6 +2,7 @@ const express = require("express");
 require("dotenv").config();
 const { createClient } = require("@supabase/supabase-js");
 const crypto = require("crypto");
+const path = require("path");
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -39,7 +40,7 @@ function requiereApiKey(req, res, next) {
 }
 
 app.use((req, res, next) => {
-    if (req.path === "/" || req.path === "/webhook") {
+    if (req.path === "/" || req.path === "/webhook" || req.path === "/dashboard") {
         return next();
     }
     requiereApiKey(req, res, next);
@@ -313,6 +314,10 @@ async function procesarMensajeEntrante(telefono, contenido, whatsapp_message_id 
 
 app.get("/", (req, res) => {
     res.send("Glow Up está funcionando 💜");
+});
+
+app.get("/dashboard", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "dashboard.html"));
 });
 
 app.get("/servicios", async (req, res) => {

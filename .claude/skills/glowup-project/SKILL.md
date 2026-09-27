@@ -145,9 +145,10 @@ Webhook de WhatsApp:
 - Probado OK el 24/09/2026 con el botón "Probar" de Meta: el mensaje llegó a Render y se guardó en Supabase (mensajes.id 13), reutilizando la conversación existente del mismo cliente.
 - ngrok ya NO se usa.
 - Función `enviarMensajeWhatsApp(telefono, texto)` en `server.js` (fetch nativo a Graph API v25.0).
-- `POST /webhook` responde automáticamente "Hola, en un momento te atendemos." si la conversación está en `BOT_ACTIVO`, y lo guarda como `BOT`. En `ATENCION_HUMANA` no responde. Si el envío falla, solo `console.error` y Meta sigue recibiendo 200.
+- `POST /webhook` responde automáticamente con el resultado de `construirMensajeServicios()` (ver punto d de la sección 6) si la conversación está en `BOT_ACTIVO`, y lo guarda como `BOT`. En `ATENCION_HUMANA` no responde. Si el envío falla, solo `console.error` y Meta sigue recibiendo 200.
 - Probado OK el 24/09/2026 localmente y en Render.
 - `POST /conversaciones/:id/responder` (body `{ texto }`): valida ventana de 24 h de WhatsApp (constante `VENTANA_ATENCION_WHATSAPP_HORAS`, regla fija de Meta, separada de `HORAS_ENTRE_RESPUESTAS_BOT`), rechaza conversaciones `CERRADA` con 409, envía por WhatsApp, guarda como `HUMANO` y pasa `BOT_ACTIVO` a `ATENCION_HUMANA`. Probado localmente el 27/09/2026.
+- `GET /dashboard` sirve `public/dashboard.html` (pública, sin datos; pide `ADMIN_API_KEY` y la guarda en `sessionStorage`; todo el contenido dinámico con `createElement`/`textContent`, nunca `innerHTML`).
 
 Endpoints existentes: revisar server.js antes de crear uno nuevo, para no duplicar rutas.
 
@@ -162,7 +163,9 @@ b) ✅ Hecho el 24/09/2026: el bot solo responde si no respondió en esa convers
 c) ✅ Hecho el 24/09/2026: se agregó la columna `mensajes.whatsapp_message_id` (text, unique, nullable); `POST /webhook` ignora mensajes cuyo id ya existe, y si dos reenvíos llegan a la vez, el error `23505` se trata como duplicado sin responder. Probado localmente enviando el mismo mensaje dos veces.
 d) ✅ Hecho el 24/09/2026: el bot responde con saludo + lista de servicios activos leída de Supabase (`construirMensajeServicios`), agrupada en orden CABELLO, MANICURE, PEDICURE, PESTAÑAS, CEJAS, ordenada por id, con formato FIJO "S/25" y DESDE "Desde S/200", horario, y cierre "en un momento te atendemos". Si falla, envía "Hola, en un momento te atendemos.". Probado localmente.
 e) ✅ Hecho el 24/09/2026: todas las rutas están protegidas por defecto con el header `x-api-key` (`ADMIN_API_KEY`), excepto `GET /`, `GET /webhook` y `POST /webhook`. Probado local y en Render.
-f) Mini dashboard para que la dueña vea conversaciones y responda usando `POST /conversaciones/:id/responder`. Para devolver una conversación al bot se usa `PATCH /conversaciones/:id` con `estado` `BOT_ACTIVO`.
+f) ✅ Hecho el 27/09/2026: mini dashboard para que la dueña vea conversaciones y responda usando `POST /conversaciones/:id/responder`. Para devolver una conversación al bot se usa `PATCH /conversaciones/:id` con `estado` `BOT_ACTIVO`. Probado localmente: lista, chat, enviar y devolver al bot.
+g) Desactivar el botón "Enviar" del dashboard mientras envía (evitar doble envío).
+h) Optimizar la carga de la lista del dashboard (hoy hace una llamada por conversación cada 10 s).
 
 ---
 
@@ -503,6 +506,8 @@ Nunca pegar el contenido del .env en chats.
 `META_APP_SECRET` existe en .env y en Render; se usa para verificar `X-Hub-Signature-256` en `POST /webhook`.
 
 `ADMIN_API_KEY` existe en .env y en Render; cualquier ruta nueva queda protegida automáticamente. Para llamar rutas de administración hay que enviar el header `x-api-key`. Si en el futuro se necesita una ruta pública nueva, hay que agregarla explícitamente a las excepciones del middleware.
+
+`/dashboard` es una excepción pública del middleware porque solo sirve el HTML (`public/dashboard.html`); ese HTML pide la `ADMIN_API_KEY` al usuario y la usa para llamar a las rutas de administración, que siguen protegidas.
 
 ---
 

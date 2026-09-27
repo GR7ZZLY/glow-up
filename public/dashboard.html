@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glow Up — Panel</title>
+<style>
+    :root {
+        --morado: #7c4dff;
+        --morado-oscuro: #6a3ef0;
+        --morado-suave: #efe6ff;
+        --morado-suave-2: #ddc9ff;
+        --borde: #e3d7f7;
+        --texto: #2c2c2c;
+        --gris: #777;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: #faf7ff;
+        color: var(--texto);
+    }
+
+    #login-screen {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+
+    .login-box {
+        background: white;
+        padding: 2rem;
+        border-radius: 14px;
+        box-shadow: 0 4px 24px rgba(124, 77, 255, 0.18);
+        width: 280px;
+        text-align: center;
+    }
+
+    .login-box h1 {
+        font-size: 1.2rem;
+        color: var(--morado);
+        margin-top: 0;
+    }
+
+    input[type="password"], input[type="text"], textarea {
+        width: 100%;
+        padding: 0.6rem;
+        border: 1px solid var(--borde);
+        border-radius: 8px;
+        font-size: 1rem;
+        font-family: inherit;
+    }
+
+    textarea {
+        resize: none;
+        height: 2.6rem;
+    }
+
+    button.primary {
+        background: var(--morado);
+        color: white;
+        border: none;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-family: inherit;
+    }
+
+    button.primary:hover { background: var(--morado-oscuro); }
+
+    .login-box button.primary {
+        width: 100%;
+        margin-top: 0.7rem;
+    }
+
+    #app {
+        display: none;
+        height: 100vh;
+    }
+
+    #app.activo { display: flex; }
+
+    .panel-lista {
+        width: 320px;
+        min-width: 320px;
+        border-right: 1px solid var(--borde);
+        overflow-y: auto;
+        background: white;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .panel-lista h2 {
+        margin: 0;
+        padding: 1rem;
+        font-size: 1.1rem;
+        color: var(--morado);
+        border-bottom: 1px solid var(--borde);
+    }
+
+    #lista-conversaciones {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .conv-item {
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid #f1ebfb;
+        cursor: pointer;
+    }
+
+    .conv-item:hover { background: var(--morado-suave); }
+    .conv-item.seleccionada { background: var(--morado-suave); }
+    .conv-item.atencion-humana { border-left: 4px solid var(--morado); }
+
+    .conv-nombre { font-weight: 600; }
+    .conv-meta { font-size: 0.8rem; color: var(--gris); margin-top: 0.2rem; }
+
+    .panel-chat {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #fdfbff;
+    }
+
+    .chat-header {
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid var(--borde);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: white;
+        gap: 0.6rem;
+    }
+
+    #chat-vacio {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gris);
+    }
+
+    #chat-cuerpo {
+        display: none;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+    }
+
+    #mensajes {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .mensaje {
+        max-width: 75%;
+        padding: 0.5rem 0.8rem;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+    }
+
+    .mensaje .etiqueta {
+        font-size: 0.7rem;
+        font-weight: 600;
+        opacity: 0.7;
+        margin-bottom: 0.15rem;
+    }
+
+    .conv-telefono {
+        font-size: 0.8rem;
+        color: var(--gris);
+    }
+
+    .mensaje .hora {
+        display: block;
+        font-size: 0.7rem;
+        color: var(--gris);
+        margin-top: 0.2rem;
+    }
+
+    .mensaje.cliente { align-self: flex-start; background: #f0f0f0; }
+    .mensaje.bot { align-self: flex-end; background: var(--morado-suave); }
+    .mensaje.humano { align-self: flex-end; background: var(--morado-suave-2); }
+
+    #error-banner {
+        display: none;
+        color: #b00020;
+        font-size: 0.85rem;
+        padding: 0.4rem 1rem;
+        background: #fdeaea;
+    }
+
+    .chat-input {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.8rem;
+        border-top: 1px solid var(--borde);
+        background: white;
+    }
+
+    .chat-input textarea { flex: 1; }
+
+    .volver-btn { display: none; }
+
+    @media (max-width: 700px) {
+        .panel-lista, .panel-chat { width: 100%; min-width: 0; }
+
+        #app.activo { flex-direction: column; }
+
+        .panel-chat { display: none; }
+
+        #app.mostrar-chat .panel-lista { display: none; }
+        #app.mostrar-chat .panel-chat { display: flex; }
+
+        .volver-btn { display: inline-block; }
+    }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+    <form id="form-login" class="login-box">
+        <h1>Glow Up 💜</h1>
+        <p>Ingresa la clave de administración</p>
+        <input type="password" id="input-clave" autocomplete="off" required>
+        <button type="submit" class="primary">Entrar</button>
+    </form>
+</div>
+
+<div id="app">
+    <div class="panel-lista">
+        <h2>Conversaciones</h2>
+        <ul id="lista-conversaciones"></ul>
+    </div>
+
+    <div class="panel-chat">
+        <div class="chat-header">
+            <button type="button" id="btn-volver" class="volver-btn">← Volver</button>
+            <div id="chat-header-info" style="flex:1"></div>
+        </div>
+
+        <div id="chat-vacio">Selecciona una conversación</div>
+
+        <div id="chat-cuerpo">
+            <div id="mensajes"></div>
+            <div id="error-banner"></div>
+            <form id="form-enviar" class="chat-input">
+                <textarea id="input-texto" placeholder="Escribe una respuesta..." required></textarea>
+                <button type="submit" class="primary">Enviar</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const CLAVE_STORAGE = "glowup_dashboard_api_key";
+    let conversacionSeleccionadaId = null;
+    let refrescoInterval = null;
+
+    function obtenerClave() {
+        try {
+            return sessionStorage.getItem(CLAVE_STORAGE);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function guardarClave(clave) {
+        try {
+            sessionStorage.setItem(CLAVE_STORAGE, clave);
+        } catch (e) { /* almacenamiento no disponible, se seguirá pidiendo la clave */ }
+    }
+
+    function borrarClave() {
+        try {
+            sessionStorage.removeItem(CLAVE_STORAGE);
+        } catch (e) { /* nada que borrar */ }
+    }
+
+    function mostrarLogin() {
+        document.getElementById("login-screen").style.display = "flex";
+        document.getElementById("app").classList.remove("activo");
+        if (refrescoInterval) {
+            clearInterval(refrescoInterval);
+            refrescoInterval = null;
+        }
+    }
+
+    function mostrarApp() {
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("app").classList.add("activo");
+    }
+
+    async function apiFetch(ruta, opciones) {
+        opciones = opciones || {};
+        const clave = obtenerClave();
+        const headers = Object.assign({}, opciones.headers, { "x-api-key": clave || "" });
+        const respuesta = await fetch(ruta, Object.assign({}, opciones, { headers }));
+
+        if (respuesta.status === 401) {
+            borrarClave();
+            mostrarLogin();
+            throw new Error("No autorizado");
+        }
+
+        return respuesta;
+    }
+
+    function formatearFecha(iso) {
+        if (!iso) return "";
+        const fecha = new Date(iso);
+        if (isNaN(fecha.getTime())) return "";
+        return fecha.toLocaleString([], { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function formatearTelefono(telefono) {
+        if (!telefono) return "";
+        if (/^\d{11}$/.test(telefono)) {
+            const codigoPais = telefono.slice(0, 2);
+            const numero = telefono.slice(2);
+            return "+" + codigoPais + " " + numero.slice(0, 3) + " " + numero.slice(3, 6) + " " + numero.slice(6);
+        }
+        if (/^\d+$/.test(telefono)) {
+            return "+" + telefono;
+        }
+        return telefono;
+    }
+
+    function agregarInfoCliente(contenedor, cliente, clienteIdFallback) {
+        const nombreValido = cliente && cliente.nombre && cliente.nombre !== "Pendiente de nombre" ? cliente.nombre : null;
+        const telefonoTexto = cliente && cliente.telefono
+            ? formatearTelefono(cliente.telefono)
+            : ("Cliente " + clienteIdFallback);
+
+        const linea1 = document.createElement("div");
+        linea1.className = "conv-nombre";
+        linea1.textContent = nombreValido || telefonoTexto;
+        contenedor.appendChild(linea1);
+
+        if (nombreValido) {
+            const linea2 = document.createElement("div");
+            linea2.className = "conv-telefono";
+            linea2.textContent = telefonoTexto;
+            contenedor.appendChild(linea2);
+        }
+    }
+
+    const ETIQUETAS_REMITENTE = { CLIENTE: "Cliente", BOT: "Bot", HUMANO: "Glow Up" };
+
+    function crearElementoLista(item) {
+        const conversacion = item.conversacion;
+        const cliente = item.cliente;
+        const ultimoMensaje = item.ultimoMensaje;
+
+        const li = document.createElement("li");
+        li.className = "conv-item";
+        if (conversacion.estado === "ATENCION_HUMANA") {
+            li.classList.add("atencion-humana");
+        }
+        if (conversacion.id === conversacionSeleccionadaId) {
+            li.classList.add("seleccionada");
+        }
+
+        agregarInfoCliente(li, cliente, conversacion.cliente_id);
+
+        const meta = document.createElement("div");
+        meta.className = "conv-meta";
+        const fecha = ultimoMensaje ? ultimoMensaje.creado_en : conversacion.creada_en;
+        meta.textContent = conversacion.estado + " · " + formatearFecha(fecha);
+
+        li.appendChild(meta);
+        li.addEventListener("click", function () {
+            seleccionarConversacion(conversacion.id);
+        });
+
+        return li;
+    }
+
+    function renderizarLista(items) {
+        const contenedor = document.getElementById("lista-conversaciones");
+        const elementos = items.map(crearElementoLista);
+        contenedor.replaceChildren.apply(contenedor, elementos);
+    }
+
+    async function cargarLista() {
+        let respuesta;
+        try {
+            respuesta = await apiFetch("/conversaciones");
+        } catch (e) {
+            return;
+        }
+        if (!respuesta.ok) return;
+
+        const conversaciones = await respuesta.json();
+        const activas = conversaciones.filter(function (c) { return c.estado !== "CERRADA"; });
+
+        const enriquecidas = await Promise.all(activas.map(async function (c) {
+            try {
+                const r = await apiFetch("/conversaciones/" + c.id + "/completa");
+                if (!r.ok) {
+                    return { conversacion: c, cliente: null, ultimoMensaje: null };
+                }
+                const datos = await r.json();
+                const mensajes = datos.mensajes || [];
+                const ultimo = mensajes.length ? mensajes[mensajes.length - 1] : null;
+                return { conversacion: c, cliente: datos.cliente, ultimoMensaje: ultimo };
+            } catch (e) {
+                return { conversacion: c, cliente: null, ultimoMensaje: null };
+            }
+        }));
+
+        enriquecidas.sort(function (a, b) {
+            const fa = a.ultimoMensaje ? a.ultimoMensaje.creado_en : a.conversacion.creada_en;
+            const fb = b.ultimoMensaje ? b.ultimoMensaje.creado_en : b.conversacion.creada_en;
+            return new Date(fb) - new Date(fa);
+        });
+
+        renderizarLista(enriquecidas);
+    }
+
+    function crearMensajeEl(m) {
+        const div = document.createElement("div");
+        div.className = "mensaje " + String(m.remitente || "").toLowerCase();
+
+        const etiqueta = document.createElement("div");
+        etiqueta.className = "etiqueta";
+        etiqueta.textContent = ETIQUETAS_REMITENTE[m.remitente] || m.remitente || "";
+
+        const texto = document.createElement("div");
+        texto.textContent = m.contenido;
+
+        const hora = document.createElement("span");
+        hora.className = "hora";
+        hora.textContent = formatearFecha(m.creado_en);
+
+        div.appendChild(etiqueta);
+        div.appendChild(texto);
+        div.appendChild(hora);
+        return div;
+    }
+
+    function renderizarChat(datos) {
+        const conversacion = datos.conversacion;
+        const cliente = datos.cliente;
+        const mensajes = datos.mensajes || [];
+
+        const encabezado = document.getElementById("chat-header-info");
+        encabezado.replaceChildren();
+
+        agregarInfoCliente(encabezado, cliente, conversacion.cliente_id);
+
+        const estado = document.createElement("div");
+        estado.className = "conv-meta";
+        estado.textContent = conversacion.estado;
+
+        encabezado.appendChild(estado);
+
+        const botonExistente = document.getElementById("btn-devolver-bot");
+        if (botonExistente) botonExistente.remove();
+
+        if (conversacion.estado === "ATENCION_HUMANA") {
+            const boton = document.createElement("button");
+            boton.id = "btn-devolver-bot";
+            boton.type = "button";
+            boton.className = "primary";
+            boton.textContent = "Devolver al bot";
+            boton.addEventListener("click", function () {
+                devolverAlBot(conversacion.id);
+            });
+            document.querySelector(".chat-header").appendChild(boton);
+        }
+
+        const contenedorMensajes = document.getElementById("mensajes");
+        const elementos = mensajes.map(crearMensajeEl);
+        contenedorMensajes.replaceChildren.apply(contenedorMensajes, elementos);
+        contenedorMensajes.scrollTop = contenedorMensajes.scrollHeight;
+
+        document.getElementById("chat-vacio").style.display = "none";
+        document.getElementById("chat-cuerpo").style.display = "flex";
+
+        document.getElementById("form-enviar").dataset.conversacionId = conversacion.id;
+    }
+
+    async function cargarChat(id) {
+        let respuesta;
+        try {
+            respuesta = await apiFetch("/conversaciones/" + id + "/completa");
+        } catch (e) {
+            return;
+        }
+        if (!respuesta.ok) return;
+        const datos = await respuesta.json();
+        renderizarChat(datos);
+    }
+
+    async function seleccionarConversacion(id) {
+        conversacionSeleccionadaId = id;
+        document.getElementById("app").classList.add("mostrar-chat");
+        await cargarChat(id);
+        await cargarLista();
+    }
+
+    function mostrarError(texto) {
+        const banner = document.getElementById("error-banner");
+        banner.textContent = texto;
+        banner.style.display = "block";
+    }
+
+    function ocultarError() {
+        const banner = document.getElementById("error-banner");
+        banner.textContent = "";
+        banner.style.display = "none";
+    }
+
+    async function devolverAlBot(id) {
+        try {
+            const respuesta = await apiFetch("/conversaciones/" + id, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ estado: "BOT_ACTIVO" })
+            });
+            if (respuesta.ok) {
+                await cargarChat(id);
+                await cargarLista();
+            }
+        } catch (e) { /* si falla, el estado simplemente no cambia visualmente */ }
+    }
+
+    function iniciarRefresco() {
+        if (refrescoInterval) clearInterval(refrescoInterval);
+        refrescoInterval = setInterval(async function () {
+            await cargarLista();
+            if (conversacionSeleccionadaId) {
+                await cargarChat(conversacionSeleccionadaId);
+            }
+        }, 10000);
+    }
+
+    async function iniciar() {
+        await cargarLista();
+        iniciarRefresco();
+    }
+
+    document.getElementById("form-login").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const valor = document.getElementById("input-clave").value.trim();
+        if (!valor) return;
+        guardarClave(valor);
+        mostrarApp();
+        iniciar();
+    });
+
+    document.getElementById("form-enviar").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const id = e.target.dataset.conversacionId;
+        const input = document.getElementById("input-texto");
+        const texto = input.value.trim();
+        if (!id || !texto) return;
+
+        ocultarError();
+
+        try {
+            const respuesta = await apiFetch("/conversaciones/" + id + "/responder", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ texto: texto })
+            });
+
+            let datos = {};
+            try { datos = await respuesta.json(); } catch (e) { /* sin cuerpo JSON */ }
+
+            if (!respuesta.ok) {
+                mostrarError(datos.mensaje || "No se pudo enviar el mensaje");
+                return;
+            }
+
+            input.value = "";
+            await cargarChat(id);
+            await cargarLista();
+        } catch (err) {
+            mostrarError("Error de conexión al enviar el mensaje");
+        }
+    });
+
+    document.getElementById("btn-volver").addEventListener("click", function () {
+        document.getElementById("app").classList.remove("mostrar-chat");
+    });
+
+    if (obtenerClave()) {
+        mostrarApp();
+        iniciar();
+    } else {
+        mostrarLogin();
+    }
+</script>
+
+</body>
+</html>
