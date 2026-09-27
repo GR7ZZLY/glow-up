@@ -47,6 +47,7 @@ app.use((req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 const HORAS_ENTRE_RESPUESTAS_BOT = 24;
+const VENTANA_ATENCION_WHATSAPP_HORAS = 24;
 
 async function resolverClientePorTelefono(telefono) {
     const { data: cliente, error: errorBusqueda } = await supabase
@@ -658,6 +659,94 @@ app.patch("/conversaciones/:id", async (req, res) => {
     }
 
     res.json(actualizada);
+});
+
+app.post("/conversaciones/:id/responder", async (req, res) => {
+    const id = Number(req.params.id);
+    const { texto } = req.body;
+
+    if (isNaN(id)) {
+        return res.status(400).json({ mensaje: "El ID debe ser un número" });
+    }
+
+    if (!texto || typeof texto !== "string" || texto.trim() === "") {
+        return res.status(400).json({ mensaje: "El campo texto no puede estar vacío" });
+    }
+
+    try {
+        const { data: conversacion, error: errorConversacion } = await supabase
+            .from("conversaciones")
+            .select("*")
+            .eq("id", id)
+            .maybeSingle();
+
+        if (errorConversacion) throw errorConversacion;
+        if (!conversacion) {
+            return res.status(404).json({ mensaje: "Conversación no encontrada" });
+        }
+
+        if (conversacion.estado === "CERRADA") {
+            return res.status(409).json({ mensaje: "La conversación está cerrada" });
+        }
+
+        const { data: cliente, error: errorCliente } = await supabase
+            .from("clientes")
+            .select("telefono")
+            .eq("id", conversacion.cliente_id)
+            .maybeSingle();
+
+        if (errorCliente) throw errorCliente;
+        if (!cliente) {
+            return res.status(404).json({ mensaje: "Cliente no encontrado" });
+        }
+
+        const { data: ultimoCliente, error: errorUltimo } = await supabase
+            .from("mensajes")
+            .select("creado_en")
+            .eq("conversacion_id", id)
+            .eq("remitente", "CLIENTE")
+            .order("creado_en", { ascending: false })
+            .limit(1);
+
+        if (errorUltimo) throw errorUltimo;
+
+        const horasDesdeUltimoMensaje = ultimoCliente.length > 0
+            ? (Date.now() - new Date(ultimoCliente[0].creado_en).getTime()) / (1000 * 60 * 60)
+            : Infinity;
+
+        if (horasDesdeUltimoMensaje >= VENTANA_ATENCION_WHATSAPP_HORAS) {
+            return res.status(409).json({
+                mensaje: "No se puede enviar texto libre: el cliente no ha escrito en las últimas 24 horas (ventana de WhatsApp cerrada)"
+            });
+        }
+
+        try {
+            await enviarMensajeWhatsApp(cliente.telefono, texto);
+        } catch (errorEnvio) {
+            return res.status(502).json({
+                mensaje: "Error al enviar el mensaje por WhatsApp",
+                error: errorEnvio.message
+            });
+        }
+
+        const mensajeGuardado = await guardarMensaje(id, "HUMANO", texto);
+
+        if (conversacion.estado === "BOT_ACTIVO") {
+            const { error: errorEstado } = await supabase
+                .from("conversaciones")
+                .update({ estado: "ATENCION_HUMANA" })
+                .eq("id", id);
+
+            if (errorEstado) throw errorEstado;
+        }
+
+        res.status(201).json(mensajeGuardado);
+    } catch (error) {
+        res.status(500).json({
+            mensaje: "Error al responder la conversación",
+            error: error.message
+        });
+    }
 });
 
 app.get("/mensajes", async (req, res) => {

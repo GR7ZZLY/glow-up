@@ -147,6 +147,7 @@ Webhook de WhatsApp:
 - Función `enviarMensajeWhatsApp(telefono, texto)` en `server.js` (fetch nativo a Graph API v25.0).
 - `POST /webhook` responde automáticamente "Hola, en un momento te atendemos." si la conversación está en `BOT_ACTIVO`, y lo guarda como `BOT`. En `ATENCION_HUMANA` no responde. Si el envío falla, solo `console.error` y Meta sigue recibiendo 200.
 - Probado OK el 24/09/2026 localmente y en Render.
+- `POST /conversaciones/:id/responder` (body `{ texto }`): valida ventana de 24 h de WhatsApp (constante `VENTANA_ATENCION_WHATSAPP_HORAS`, regla fija de Meta, separada de `HORAS_ENTRE_RESPUESTAS_BOT`), rechaza conversaciones `CERRADA` con 409, envía por WhatsApp, guarda como `HUMANO` y pasa `BOT_ACTIVO` a `ATENCION_HUMANA`. Probado localmente el 27/09/2026.
 
 Endpoints existentes: revisar server.js antes de crear uno nuevo, para no duplicar rutas.
 
@@ -161,6 +162,7 @@ b) ✅ Hecho el 24/09/2026: el bot solo responde si no respondió en esa convers
 c) ✅ Hecho el 24/09/2026: se agregó la columna `mensajes.whatsapp_message_id` (text, unique, nullable); `POST /webhook` ignora mensajes cuyo id ya existe, y si dos reenvíos llegan a la vez, el error `23505` se trata como duplicado sin responder. Probado localmente enviando el mismo mensaje dos veces.
 d) ✅ Hecho el 24/09/2026: el bot responde con saludo + lista de servicios activos leída de Supabase (`construirMensajeServicios`), agrupada en orden CABELLO, MANICURE, PEDICURE, PESTAÑAS, CEJAS, ordenada por id, con formato FIJO "S/25" y DESDE "Desde S/200", horario, y cierre "en un momento te atendemos". Si falla, envía "Hola, en un momento te atendemos.". Probado localmente.
 e) ✅ Hecho el 24/09/2026: todas las rutas están protegidas por defecto con el header `x-api-key` (`ADMIN_API_KEY`), excepto `GET /`, `GET /webhook` y `POST /webhook`. Probado local y en Render.
+f) Mini dashboard para que la dueña vea conversaciones y responda usando `POST /conversaciones/:id/responder`. Para devolver una conversación al bot se usa `PATCH /conversaciones/:id` con `estado` `BOT_ACTIVO`.
 
 ---
 
@@ -568,7 +570,7 @@ Pero todo debe construirse progresivamente y ser probado antes de avanzar.
 
 Formato de teléfono: `clientes.telefono` se guarda como código de país + número, sin `+`, sin espacios ni guiones (ej. `51999888777`) — igual al formato que entrega WhatsApp Cloud API en el campo `from` de los mensajes entrantes. Decisión tomada para evitar conversiones innecesarias al conectar el webhook.
 
-Valor de `mensajes.remitente`: para mensajes entrantes de WhatsApp se usa `CLIENTE`, y para respuestas automáticas se usa `BOT` — consistente con la nomenclatura ya usada en `conversaciones.estado` (`BOT_ACTIVO`, `ATENCION_HUMANA`). No existe todavía un tercer valor para atención humana con trabajador identificado, porque no hay tabla de trabajadores/usuarios en el sistema; esa es una decisión pendiente y separada, no tomar todavía.
+Valor de `mensajes.remitente`: para mensajes entrantes de WhatsApp se usa `CLIENTE`, y para respuestas automáticas se usa `BOT` — consistente con la nomenclatura ya usada en `conversaciones.estado` (`BOT_ACTIVO`, `ATENCION_HUMANA`). Decidido el 27/09/2026: los mensajes escritos por una persona se guardan con remitente `HUMANO` (sin identificar quién; si se necesita, se agregará una columna aparte). No hay restricción CHECK sobre remitente en Supabase.
 
 Limitación conocida del webhook de WhatsApp: mientras la app de Meta esté en modo Desarrollo (sin publicar), Meta NO reenvía mensajes reales de WhatsApp al webhook — solo eventos sintéticos disparados manualmente con el botón "Probar" del panel de Meta. Esto fue confirmado probando ambos casos: el botón "Probar" sí llega a `POST /webhook` y guarda correctamente en la base de datos, pero un mensaje real enviado desde WhatsApp (con doble check de entregado) nunca llega.
 
