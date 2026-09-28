@@ -161,12 +161,12 @@ Pendientes, en este orden:
 a) ✅ Hecho el 24/09/2026: verificar la firma `X-Hub-Signature-256` en `POST /webhook` usando el App Secret. Probado localmente con y sin firma, y con el botón "Probar" de Meta en Render.
 b) ✅ Hecho el 24/09/2026: el bot solo responde si no respondió en esa conversación en las últimas `HORAS_ENTRE_RESPUESTAS_BOT` (24, constante en `server.js`; valor elegido por coincidir con la ventana de 24 h de WhatsApp, la dueña puede cambiarlo). Probado localmente.
 c) ✅ Hecho el 24/09/2026: se agregó la columna `mensajes.whatsapp_message_id` (text, unique, nullable); `POST /webhook` ignora mensajes cuyo id ya existe, y si dos reenvíos llegan a la vez, el error `23505` se trata como duplicado sin responder. Probado localmente enviando el mismo mensaje dos veces.
-d) ✅ Hecho el 24/09/2026: el bot responde con saludo + lista de servicios activos leída de Supabase (`construirMensajeServicios`), agrupada en orden CABELLO, MANICURE, PEDICURE, PESTAÑAS, CEJAS, ordenada por id, con formato FIJO "S/25" y DESDE "Desde S/200", horario, y cierre "en un momento te atendemos". Si falla, envía "Hola, en un momento te atendemos.". Probado localmente.
+d) ✅ Hecho el 24/09/2026: el bot responde con saludo + lista de servicios activos leída de Supabase (`construirMensajeServicios`), agrupada en orden CABELLO, MANICURE, PEDICURE, PESTAÑAS, CEJAS, ordenada por id, con formato FIJO "S/25" y DESDE "Desde S/200", horario, y cierre "en un momento te atendemos". Si falla, envía "Hola, en un momento te atendemos.". Probado localmente. Desde el 28/09/2026 el primer mensaje del bot lo genera `construirMensajeBienvenida()`, basado en el saludo real de la dueña: "Hola bella 💗 Tenemos:" + servicios con `destacado = true` ordenados por precio ascendente, con `emoji` y `descripcion_corta` de la tabla (formato "✨ Alisado Frizz Control: desde S/200, dura de 4 a 5 meses (termoactivo)."), invitación a enviar foto del cabello y cierre "Cuéntanos qué te interesa y en un momento te atendemos.". Mismo respaldo si hay error o no hay destacados. `construirMensajeServicios()` queda sin uso por ahora.
 e) ✅ Hecho el 24/09/2026: todas las rutas están protegidas por defecto con el header `x-api-key` (`ADMIN_API_KEY`), excepto `GET /`, `GET /webhook` y `POST /webhook`. Probado local y en Render.
 f) ✅ Hecho el 27/09/2026: mini dashboard para que la dueña vea conversaciones y responda usando `POST /conversaciones/:id/responder`. Para devolver una conversación al bot se usa `PATCH /conversaciones/:id` con `estado` `BOT_ACTIVO`. El encabezado del chat queda fijo (solo hacen scroll los mensajes). Probado localmente: lista, chat, enviar y devolver al bot.
 g) ✅ Hecho el 27/09/2026: se desactiva el botón "Enviar" y la caja de texto del dashboard mientras envía, y se reactivan al terminar (éxito o error), evitando doble envío.
 h) Optimizar la carga de la lista del dashboard (hoy hace una llamada por conversación cada 10 s).
-i) Rediseñar el primer mensaje del bot poniendo los alisados primero: según el análisis del export de la IA de la dueña, el 64% de las conversaciones reales son sobre alisados y el 47% preguntan precio.
+i) ✅ Hecho el 28/09/2026 (ver punto d): rediseñar el primer mensaje del bot poniendo los alisados primero: según el análisis del export de la IA de la dueña, el 64% de las conversaciones reales son sobre alisados y el 47% preguntan precio.
 
 ---
 
@@ -210,6 +210,8 @@ Diagnóstico capilar gratuito y presencial
 # 8. Servicios
 
 Nota: la fuente de verdad de precios es la tabla `servicios` de Supabase; esta lista es referencia y debe mantenerse igual a la tabla.
+
+Además de nombre, categoría, precio y tipo de precio, la tabla `servicios` tiene las columnas `destacado` (boolean; los destacados salen en el mensaje de bienvenida del bot), `emoji` (text) y `descripcion_corta` (text), editables por la dueña. A `descripcion_corta` el bot le quita espacios y puntos finales antes de usarla.
 
 Actualizado según lo confirmado por la dueña el 27/09/2026 (la tabla `servicios` ya está así).
 

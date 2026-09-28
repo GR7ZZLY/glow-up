@@ -276,6 +276,41 @@ async function construirMensajeServicios() {
     return texto;
 }
 
+async function construirMensajeBienvenida() {
+    const RESPALDO = "Hola, en un momento te atendemos.";
+
+    const { data: servicios, error } = await supabase
+        .from("servicios")
+        .select("nombre, precio, tipo_precio, emoji, descripcion_corta")
+        .eq("activo", true)
+        .eq("destacado", true)
+        .order("precio", { ascending: true });
+
+    if (error) {
+        console.error("Error al obtener servicios destacados para el mensaje de bienvenida:", error);
+        return RESPALDO;
+    }
+
+    if (!servicios || servicios.length === 0) {
+        return RESPALDO;
+    }
+
+    const lineas = servicios.map((s) => {
+        const precioTexto = s.tipo_precio === "DESDE" ? `desde S/${s.precio}` : `S/${s.precio}`;
+        const inicio = s.emoji ? `${s.emoji} ${s.nombre}` : s.nombre;
+        const descripcionLimpia = (s.descripcion_corta || "").trim().replace(/[.\s]+$/, "");
+        const descripcion = descripcionLimpia ? `, ${descripcionLimpia}` : "";
+        return `${inicio}: ${precioTexto}${descripcion}.`;
+    });
+
+    let texto = "Hola bella 💗 Tenemos:\n\n";
+    texto += `${lineas.join("\n")}\n\n`;
+    texto += "Si gustas, puedes enviarnos una fotito de tu cabello 📸 y te damos un aproximado de tu cotización 💕\n\n";
+    texto += "También hacemos uñas, pestañas, cejas, tintes y tratamientos. Cuéntanos qué te interesa y en un momento te atendemos.";
+
+    return texto;
+}
+
 async function procesarMensajeEntrante(telefono, contenido, whatsapp_message_id = null) {
     const cliente = await resolverClientePorTelefono(telefono);
     let conversacion = await resolverConversacionActiva(cliente.id);
@@ -1734,7 +1769,7 @@ app.post("/webhook", async (req, res) => {
                 if (await botRespondioRecientemente(conversacion.id)) {
                     console.log("Respuesta automática omitida: el bot ya respondió recientemente en esta conversación");
                 } else {
-                    const textoBot = await construirMensajeServicios();
+                    const textoBot = await construirMensajeBienvenida();
                     await enviarMensajeWhatsApp(telefono, textoBot);
                     await guardarMensaje(conversacion.id, "BOT", textoBot);
                 }
