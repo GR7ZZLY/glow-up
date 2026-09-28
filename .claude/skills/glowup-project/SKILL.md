@@ -166,6 +166,7 @@ e) ✅ Hecho el 24/09/2026: todas las rutas están protegidas por defecto con el
 f) ✅ Hecho el 27/09/2026: mini dashboard para que la dueña vea conversaciones y responda usando `POST /conversaciones/:id/responder`. Para devolver una conversación al bot se usa `PATCH /conversaciones/:id` con `estado` `BOT_ACTIVO`. El encabezado del chat queda fijo (solo hacen scroll los mensajes). Probado localmente: lista, chat, enviar y devolver al bot.
 g) ✅ Hecho el 27/09/2026: se desactiva el botón "Enviar" y la caja de texto del dashboard mientras envía, y se reactivan al terminar (éxito o error), evitando doble envío.
 h) Optimizar la carga de la lista del dashboard (hoy hace una llamada por conversación cada 10 s).
+i) Rediseñar el primer mensaje del bot poniendo los alisados primero: según el análisis del export de la IA de la dueña, el 64% de las conversaciones reales son sobre alisados y el 47% preguntan precio.
 
 ---
 
@@ -210,16 +211,17 @@ Diagnóstico capilar gratuito y presencial
 
 Nota: la fuente de verdad de precios es la tabla `servicios` de Supabase; esta lista es referencia y debe mantenerse igual a la tabla.
 
-Actualizado el 27/09/2026 con el estado actual confirmado por la dueña. Hay precios pendientes de confirmar en el documento de validación "Ronda 2".
+Actualizado según lo confirmado por la dueña el 27/09/2026 (la tabla `servicios` ya está así).
 
 ## CABELLO
 
 - Alisado Orgánico Premium — Desde S/300 (8 meses, liso 100%, no termoactivo)
 - Alisado Frizz Control — Desde S/200 (4-5 meses, termoactivo)
 - Laceado Diamond — Desde S/350 (12 meses, ideal para cabello afro; equivale al "Dual Premium")
-- Botox Capilar — Desde S/100
+- Botox Capilar (hidratación) — Desde S/150
 - Tratamiento Antifrizz y Porosidad — Desde S/150
 - Bioplastia — Desde S/150
+- Nanoplastia — Desde S/150
 - Tinte de cabello — Desde S/100
 - Tinte de raíz — Desde S/80
 - Baño de color — Desde S/100
@@ -229,32 +231,42 @@ Actualizado el 27/09/2026 con el estado actual confirmado por la dueña. Hay pre
 - Planchado — Desde S/40
 - Cepillado / Brushing — Desde S/40
 - Peinado — Desde S/50
+- Corte de cabello — Desde S/30
+
+Las hidrataciones son botox; no hay un servicio de hidratación aparte.
 
 ## MANICURE
 
 - Manicure clásica — S/25
 - Esmaltado en gel — Desde S/35
-- Rubber — S/40
-- Acrílicas — S/50
-- Polygel — S/60
-- Soft Gel — S/60
+- Rubber — Desde S/40 (varía según diseño)
+- Acrílicas — Desde S/50 (tamaño 2, francesa o color entero)
+- Polygel — Desde S/60
+- Soft Gel — Desde S/60
 - Retiro de producto — Desde S/10
+- Retiro de Rubber — S/20
+- Retiro de acrílico o polygel — S/30
 - Diseño / Nail Art — Desde S/10
+
+No existe "alargamiento" como servicio aparte.
 
 ## PEDICURE
 
 - Pedicure en gel — Desde S/45
 - Retiro de producto — Desde S/10
 - Diseño de uñas — Desde S/10
+- Francesa (adicional) — S/5
 
 ## PESTAÑAS
 
-- Lifting clásico — S/49.99 (incluye efecto rímel)
-- Lifting efecto rímel — S/50 (sigue activo en la tabla; pendiente confirmar en Ronda 2 si se ofrece aparte, porque el lifting clásico ya lo incluye)
+- Lifting clásico — S/40 (ya NO incluye efecto rímel)
+- Efecto rímel (adicional al lifting) — S/10
 - Lifting coreano — S/79.99
+- Pack Mirada (lifting, efecto rímel, laminado de cejas y depilación) — S/70
 - Extensiones de pestañas clásicas — S/50
 - Extensiones de pestañas rímel — S/80
 - Extensiones tecnológicas — S/70
+- Extensiones híbridas — S/100
 - Retiro de extensiones — S/15
 
 ## CEJAS
@@ -264,6 +276,12 @@ Actualizado el 27/09/2026 con el estado actual confirmado por la dueña. Hay pre
 - Laminado de cejas — S/30
 - Laminado + perfilado — S/35
 - Tinte de cejas — Desde S/40
+- Henna — S/40
+- Depilación de cejas y bozo (con hilo) — S/25
+
+## PRODUCTOS
+
+- Kit anti frizz (3 productos) — S/180
 
 ---
 
